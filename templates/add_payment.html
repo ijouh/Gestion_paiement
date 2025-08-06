@@ -1,0 +1,30 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h3>Ajouter un paiement</h3>
+
+<form method="POST" action="{{ url_for('ajouter_paiement') }}">
+    <div class="mb-3">
+        <label>Client</label>
+        <select name="client_id" class="form-select" required>
+            {% for client in clients %}
+            {% set total_paye = client.paiements | sum(attribute='montant_paye') %}
+            {% if total_paye < client.montant_total %}
+            <option value="{{ client.id }}">{{ client.nom }} ({{ client.type_client }})</option>
+            {% endif %}
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label>Date de paiement</label>
+        <input type="date" name="date_paiement" class="form-control" min="{{ today }}" required />
+    </div>
+    <div class="mb-3">
+        <label>Montant payé (€)</label>
+        <input type="number" step="0.01" name="montant_paye" class="form-control" required />
+    </div>
+    
+    <button type="submit" class="btn btn-success">Ajouter le paiement</button>
+</form>
+
+{% endblock %}

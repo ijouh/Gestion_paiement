@@ -1,0 +1,43 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h3>Détails des paiements par client</h3>
+
+{% for client in clients %}
+<div class="card mb-3">
+    <div class="card-header">
+        <strong>{{ client.nom }}</strong> – {{ client.type_client }} – Total : {{ client.montant_total }} €
+    </div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Montant payé</th>
+                    <th>Reste</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for paiement in client.paiements %}
+                <tr>
+                    <td>{{ paiement.date_paiement.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ paiement.montant_paye }} €</td>
+                    <td>{{ paiement.reste }} €</td>
+                    <td>
+                        {% if paiement.statut == 'payé' %}
+                            <span class="badge bg-success">Payé</span>
+                        {% elif paiement.statut == 'en retard' %}
+                            <span class="badge bg-danger">En retard</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ paiement.statut }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

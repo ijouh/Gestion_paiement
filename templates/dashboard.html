@@ -1,0 +1,45 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h2>Liste des clients</h2>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Email</th>
+            <th>Téléphone</th>
+            <th>Adresse</th>
+            <th>Type</th>
+            <th>Montant total (€)</th>
+            <th>Total payé (€)</th>
+            <th>Reste (€)</th>
+            <th>Statut</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for client in clients %}
+        {% set total_paye = client.paiements | sum(attribute='montant_paye') %}
+        {% set reste = client.montant_total - total_paye %}
+        <tr>
+            <td>{{ client.nom }}</td>
+            <td>{{ client.email }}</td>
+            <td>{{ client.telephone }}</td>
+            <td>{{ client.adresse }}</td>
+            <td>{{ client.type_client }}</td>
+            <td>{{ '%.2f' % client.montant_total }}</td>
+            <td>{{ '%.2f' % total_paye }}</td>
+            <td>{{ '%.2f' % reste }}</td>
+            <td>
+                {% if reste <= 0 %}
+                    <span class="badge bg-success">Complet ✅</span>
+                {% else %}
+                    <span class="badge bg-danger">En cours ❌</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+
+</table>
+{% endblock %}
