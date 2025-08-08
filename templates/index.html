@@ -1,0 +1,47 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4 text-center">Liste des clients</h2>
+  <table class="table table-bordered table-hover">
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Email</th>
+        <th>Modalité de paiement</th>
+        <th>Montant total (€)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for client in clients %}
+      <tr>
+        <td>{{ client.nom }}</td>
+        <td>{{ client.email }}</td>
+        <td>{{ client.modalite_paiement }}</td>
+        <td>{{ '%.2f'|format(client.montant_total) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 class="mb-4 mt-5 text-center">Liste des paiements</h2>
+  <table class="table table-bordered table-hover">
+    <thead>
+      <tr>
+        <th>Client</th>
+        <th>Date de paiement</th>
+        <th>Montant payé (€)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for paiement in paiements %}
+      <tr>
+        <td>{{ paiement.client.nom }}</td>
+        <td>{{ paiement.date_paiement.strftime('%Y-%m-%d') }}</td>
+        <td>{{ '%.2f'|format(paiement.montant_paye) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

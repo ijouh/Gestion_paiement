@@ -1,45 +1,230 @@
 {% extends 'layout.html' %}
-
 {% block content %}
-<h2>Liste des clients</h2>
 
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Nom</th>
-            <th>Email</th>
-            <th>Téléphone</th>
-            <th>Adresse</th>
-            <th>Type</th>
-            <th>Montant total (€)</th>
-            <th>Total payé (€)</th>
-            <th>Reste (€)</th>
-            <th>Statut</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for client in clients %}
-        {% set total_paye = client.paiements | sum(attribute='montant_paye') %}
-        {% set reste = client.montant_total - total_paye %}
-        <tr>
-            <td>{{ client.nom }}</td>
-            <td>{{ client.email }}</td>
-            <td>{{ client.telephone }}</td>
-            <td>{{ client.adresse }}</td>
-            <td>{{ client.type_client }}</td>
-            <td>{{ '%.2f' % client.montant_total }}</td>
-            <td>{{ '%.2f' % total_paye }}</td>
-            <td>{{ '%.2f' % reste }}</td>
-            <td>
-                {% if reste <= 0 %}
-                    <span class="badge bg-success">Complet ✅</span>
+<div class="container my-4">
+    <h2 class="mb-4 fw-bold text-primary">
+        <i class="bi bi-people-fill me-2"></i>Liste des clients
+    </h2>
+
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover align-middle table-striped">
+            <thead class="table-primary">
+                <tr>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Type paiement</th>
+                    <th>Montant total (€)</th>
+                    <th>Total payé (€)</th>
+                    <th>Reste (€)</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in clients %}
+                {% set total_paye = client.paiements | sum(attribute='montant_paye') %}
+                {% set reste = client.montant_total - total_paye %}
+                <tr>
+                    <td>{{ client.nom }}</td>
+                    <td>{{ client.email }}</td>
+                    <td>{{ client.modalite_paiement }}</td>
+                    <td>{{ '%.2f' % client.montant_total }}</td>
+                    <td>{{ '%.2f' % total_paye }}</td>
+                    <td>{{ '%.2f' % reste }}</td>
+                    <td>
+                        {% if reste <= 0 %}
+                            <span class="badge bg-success px-3 py-2">Complet</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark px-3 py-2">En cours</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('modifier_client', id=client.id) }}" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('supprimer_client', id=client.id) }}" class="d-inline" onsubmit="return confirm('Confirmer suppression client ?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <hr class="my-5">
+
+    <!-- Filtrage -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3"><i class="bi bi-funnel-fill me-2"></i>Filtrer paiements par mois</h5>
+            <form method="get" action="{{ url_for('dashboard') }}" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Année</label>
+                    <select name="annee" class="form-select">
+                        <option value="">-- Toutes les années --</option>
+                        {% for an in mois_dispo|map(attribute=0)|unique %}
+                            <option value="{{ an }}" {% if an == annee %}selected{% endif %}>{{ an }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Mois</label>
+                    <select name="mois" class="form-select">
+                        <option value="">-- Tous les mois --</option>
+                        {% for m in mois_dispo|map(attribute=1)|unique %}
+                            <option value="{{ m }}" {% if m == mois %}selected{% endif %}>{{ "%02d" % m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i> Filtrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau paiements -->
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover align-middle">
+            <thead class="table-secondary">
+                <tr>
+                    <th>Client</th>
+                    <th>Date</th>
+                    <th>Montant payé (€)</th>
+                    <th>Reste (€)</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for paiement in paiements %}
+                    <tr>
+                        <td>{{ paiement.client.nom }}</td>
+                        <td>{{ paiement.date_paiement.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ '%.2f' % paiement.montant_paye }}</td>
+                        <td>{{ '%.2f' % paiement.reste }}</td>
+                        <td>{{ paiement.statut }}</td>
+                        <td>
+                            <a href="{{ url_for('modifier_paiement', id=paiement.id) }}" class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('supprimer_paiement', id=paiement.id) }}" class="d-inline" onsubmit="return confirm('Confirmer suppression paiement ?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
                 {% else %}
-                    <span class="badge bg-danger">En cours ❌</span>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">Aucun paiement trouvé</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-</table>
+    <!-- Pagination -->
+    <nav aria-label="Pagination paiements" class="mt-4">
+      <ul class="pagination justify-content-center">
+        {% for p in range(1, total_pages + 1) %}
+          <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('dashboard', page=p, mois=mois, annee=annee) }}">
+              {{ p }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </nav>
+
+    <!-- Total par mois -->
+    <h3 class="mt-5 fw-bold text-secondary">Total payé par mois</h3>
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-striped align-middle">
+            <thead class="table-info">
+                <tr>
+                    <th>Année</th>
+                    <th>Mois</th>
+                    <th>Total payé (€)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in paiements_par_mois %}
+                <tr>
+                    <td>{{ row.annee }}</td>
+                    <td>{{ "%02d" % row.mois }}</td>
+                    <td>{{ "%.2f" % row.total_mensuel }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Bouton export -->
+    <div class="mt-4">
+        <a href="{{ url_for('export_clients_excel') }}" class="btn btn-success shadow-sm">
+            <i class="bi bi-file-earmark-excel-fill me-1"></i> Télécharger rapport Excel
+        </a>
+    </div>
+
+    <!-- Diagramme -->
+    <h3 class="mt-5 fw-bold">Statistiques des paiements</h3>
+    <canvas id="paiementChart" height="100" class="shadow-sm p-3 bg-white rounded"></canvas>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('paiementChart').getContext('2d');
+
+    // Labels: concat année + mois pour plus clair
+    const labels = [
+        {% for row in paiements_par_mois %}
+            "{{ row.annee }}-{{ "%02d"|format(row.mois) }}",
+        {% endfor %}
+    ];
+
+    // Données total payé
+    const data = [
+        {% for row in paiements_par_mois %}
+            {{ row.total_mensuel }},
+        {% endfor %}
+    ];
+
+    const paiementChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Total payé (€)',
+                data: data,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                title: {
+                    display: true,
+                    text: 'Total des paiements par mois'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}
