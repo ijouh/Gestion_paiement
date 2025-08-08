@@ -1,7 +1,7 @@
-# Utilise une image Python officielle avec une version récente
+# Utiliser une image Python officielle avec une version récente
 FROM python:3.11-slim
 
-# Installer les dépendances système nécessaires pour pandas et psycopg2
+# Installer les dépendances système nécessaires pour pandas, psycopg2, et compilation
 RUN apt-get update && apt-get install -y \
     build-essential \
     gcc \
@@ -9,20 +9,21 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Créer et définir le répertoire de travail
+# Définir le répertoire de travail
 WORKDIR /app
 
-# Copier les fichiers requirements et installer les dépendances Python
+# Copier le fichier requirements dans le conteneur
 COPY requirements.txt .
 
+# Mettre à jour pip et installer les dépendances Python
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Copier tout le contenu du projet dans le conteneur
+# Copier le reste des fichiers de l'application
 COPY . .
 
-# Expose le port utilisé par Flask (modifie si besoin)
+# Exposer le port utilisé par Flask (adapter si besoin)
 EXPOSE 5000
 
-# Commande pour lancer l’application Flask (à adapter si nécessaire)
+# Commande pour lancer l’application Flask avec Gunicorn
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
